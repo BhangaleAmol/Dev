@@ -1,0 +1,165 @@
+# Databricks notebook source
+# MAGIC %run ../SHARED/bootstrap
+
+# COMMAND ----------
+
+# Get parameters
+dbutils.widgets.text("source_folder", "","")
+sourceFolder = getArgument("source_folder")
+sourceFolder = '/datalake/EBS/raw_data/delta_data' if sourceFolder == '' else sourceFolder
+
+dbutils.widgets.text("target_folder", "","")
+targetFolder = getArgument("target_folder")
+targetFolder = '/datalake/EBS/stage_data' if targetFolder == '' else targetFolder
+
+dbutils.widgets.text("table_name", "","")
+tableName = getArgument("table_name")
+tableName = 'W_GL_OTHER_F' if tableName == '' else tableName
+
+# COMMAND ----------
+
+# Create paths
+sourceFolderUrl = DATALAKE_ENDPOINT  + sourceFolder + '/'
+targetFileUrl = DATALAKE_ENDPOINT +  targetFolder + '/' + tableName + '.par'
+
+print(sourceFolderUrl)
+print(targetFileUrl)
+
+# COMMAND ----------
+
+# INCREMENTAL DATASET
+sourceFileUrl = sourceFolderUrl + 'apps.gl_je_lines.par'
+GL_JE_LINES_INC = spark.read.parquet(sourceFileUrl)
+GL_JE_LINES_INC.createOrReplaceTempView("GL_JE_LINES_INC")
+
+# COMMAND ----------
+
+GL_SETS_OF_BOOKS1 = spark.sql("""
+  SELECT
+    INT(SET_OF_BOOKS_ID), 
+    CURRENCY_CODE 
+  FROM GL_SETS_OF_BOOKS  
+""")
+
+GL_SETS_OF_BOOKS1.cache()
+GL_SETS_OF_BOOKS1.createOrReplaceTempView("GL_SETS_OF_BOOKS1")
+GL_SETS_OF_BOOKS1.count()
+
+# COMMAND ----------
+
+DERIVE_FACT = spark.sql("""
+  SELECT CONCAT(INT(COALESCE(JEL.JE_HEADER_ID,'')),'-',INT(COALESCE(JEL.JE_LINE_NUM,''))) INTEGRATION_ID,
+    'EBS' DATASOURCE_NUM_ID,
+    JEL.LEDGER_ID SET_OF_BOOKS_ID,
+    JEL.CODE_COMBINATION_ID CODE_COMB_ID,
+    INT(JEL.CODE_COMBINATION_ID) GL_ACCT_ID,
+    JEL.PERIOD_NAME PERIOD_NAME,
+    PRDS.START_DATE EFFECTIVE_DATE,
+    PRDS.END_DATE ACCT_PERIOD_END_DT,
+    JEL.STATUS STATUS,
+    JEL.ENTERED_DR ENTERED_DR,
+    JEL.ENTERED_CR ENTERED_CR,
+    JEL.ACCOUNTED_DR ACCOUNTED_DR,
+    JEL.ACCOUNTED_CR ACCOUNTED_CR,
+    JEH.JE_CATEGORY JE_CATEGORY,
+    JEH.JE_SOURCE JE_SOURCE,
+    JEL.CREATED_BY CREATED_BY,
+    JEL.LAST_UPDATED_BY LAST_UPDATED_BY,
+    JEL.CREATION_DATE CREATION_DATE,
+    JEL.LAST_UPDATE_DATE LAST_UPDATE_DATE,
+    JEH.POSTED_DATE POSTED_DATE,
+    JEH.CURRENCY_CODE CURRENCY_CODE,
+    JEB.NAME GL_JE_BATCHES_NAME,
+    JEL.JE_LINE_NUM GL_JE_LINES_NUM,
+    JEH.NAME GL_JE_HEADERS_NAME,
+    PRDS.ADJUSTMENT_PERIOD_FLAG ADJUSTMENT_FLG,
+    JEL.GL_SL_LINK_ID GL_SL_LINK_ID,
+    CASE
+      WHEN GL.LEDGER_CATEGORY_CODE = 'PRIMARY' THEN 'Y'
+      ELSE 'N'  
+    END PRIMARY_LEDGER_FLG,
+    DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd hh:mm:ss.SSS') INSERT_DT,
+    DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd hh:mm:ss.SSS') UPDATE_DT,
+    'N' DELETE_FLG
+  FROM GL_JE_LINES_INC JEL
+  INNER JOIN GL_JE_HEADERS JEH ON JEL.JE_HEADER_ID = JEH.JE_HEADER_ID AND JEH.ACTUAL_FLAG = 'A' AND JEH.CURRENCY_CODE <> 'STAT'
+  INNER JOIN GL_PERIOD_STATUSES PRDS ON JEL.LEDGER_ID = PRDS.SET_OF_BOOKS_ID AND PRDS.APPLICATION_ID = 101 AND JEL.PERIOD_NAME = PRDS.PERIOD_NAME 
+  INNER JOIN GL_LEDGERS GL ON JEL.LEDGER_ID = GL.LEDGER_ID
+  LEFT JOIN GL_JE_BATCHES JEB ON JEH.JE_BATCH_ID = JEB.JE_BATCH_ID AND JEB.STATUS = 'P'
+  WHERE JEL.STATUS = 'P'
+""")
+
+DERIVE_FACT.createOrReplaceTempView("DERIVE_FACT")
+DERIVE_FACT.cache()
+DERIVE_FACT.count()
+
+# COMMAND ----------
+
+W_GL_OTHER_F = spark.sql("""
+  SELECT 
+    DF.INTEGRATION_ID INTEGRATION_ID,
+    DF.CREATION_DATE CREATED_ON_DT,
+    DF.LAST_UPDATE_DATE CHANGED_ON_DT,
+    INT(DF.CREATED_BY) CREATED_BY_ID,
+    INT(DF.LAST_UPDATED_BY) CHANGED_BY_ID,
+    DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd hh:mm:ss.SSS') INSERT_DT,             
+    DATE_FORMAT(CURRENT_TIMESTAMP, 'yyyy-MM-dd hh:mm:ss.SSS') UPDATE_DT,
+    DF.DATASOURCE_NUM_ID DATASOURCE_NUM_ID,
+    STRING(DATE_FORMAT(CURRENT_TIMESTAMP(), 'yyyyMMddhhmmssSSS')) LOAD_BATCH_ID,
+    INT(DF.CODE_COMB_ID) GL_ACCOUNT_ID,
+    INT(DF.SET_OF_BOOKS_ID) LEDGER_ID,
+    'ACCT_DOC-OTHERS' DOC_TYPE_ID,
+    'ACCT_DOC_STATUS-POSTED' DOC_STATUS_ID,
+    DATE_FORMAT(STRING(DF.POSTED_DATE), 'yyyyMMdd') TRANSACTION_DT_WID,
+    DATE_FORMAT(STRING(DF.POSTED_DATE), 'yyyyMMdd') POSTED_ON_DT_WID,
+    DATE_FORMAT(STRING(DF.ACCT_PERIOD_END_DT), 'yyyyMMdd') ACCT_PERIOD_END_DT_WID,
+    COALESCE(DF.ENTERED_DR,0) - COALESCE(DF.ENTERED_CR, 0) OTHER_DOC_AMT,
+    COALESCE(DF.ACCOUNTED_DR,0) - COALESCE(DF.ACCOUNTED_CR, 0) OTHER_LOC_AMT,
+    CASE
+      WHEN COALESCE(DF.ENTERED_DR, 0) - COALESCE(DF.ENTERED_CR, 0) < 0 THEN 'CREDIT'
+      ELSE 'DEBIT'
+    END DB_CR_IND,
+    SUBSTR(DF.GL_JE_BATCHES_NAME, 1, 30) ACCT_DOC_NUM,
+    DF.GL_JE_LINES_NUM ACCT_DOC_ITEM,
+    DF.JE_SOURCE REF_DOC_NUM,
+    DF.GL_SL_LINK_ID REF_DOC_ITEM,
+    DF.GL_JE_BATCHES_NAME DOC_HEADER_TEXT,
+    DF.GL_JE_HEADERS_NAME LINE_ITEM_TEXT,
+    DF.JE_CATEGORY JE_CATEGORY,
+    CONCAT(INT(COALESCE(DF.SET_OF_BOOKS_ID, '')), '-', INT(COALESCE(DF.CODE_COMB_ID, ''))) BALANCE_ID,
+    DF.ADJUSTMENT_FLG ADJUSTMENT_FLG,
+    CASE 
+      WHEN DF.CURRENCY_CODE IS NULL THEN SOB.CURRENCY_CODE
+      ELSE DF.CURRENCY_CODE
+    END DOC_CURR_CODE,
+    SOB.CURRENCY_CODE LOC_CURR_CODE,
+    'N' DELETE_FLG
+  FROM DERIVE_FACT DF
+  INNER JOIN GL_SETS_OF_BOOKS1 SOB ON DF.SET_OF_BOOKS_ID = SOB.SET_OF_BOOKS_ID
+""")
+
+W_GL_OTHER_F.cache()
+W_GL_OTHER_F.count()
+
+# COMMAND ----------
+
+count = W_GL_OTHER_F.select("INTEGRATION_ID").count()
+countDistinct = W_GL_OTHER_F.select("INTEGRATION_ID").distinct().count()
+
+print(count)
+print(countDistinct)
+
+if(count != countDistinct):
+  message = 'Mismatch in count of total records ({0}) and distinct count of primary keys ({1}) in {2} '.format(count, countDistinct, tableName)
+  raise Exception(message)
+
+# COMMAND ----------
+
+W_GL_OTHER_F.coalesce(10).write.format("parquet").mode("overwrite").save(targetFileUrl)
+
+# COMMAND ----------
+
+GL_JE_LINES_INC.unpersist()
+GL_SETS_OF_BOOKS1.unpersist()
+DERIVE_FACT.unpersist()
+W_GL_OTHER_F.unpersist()

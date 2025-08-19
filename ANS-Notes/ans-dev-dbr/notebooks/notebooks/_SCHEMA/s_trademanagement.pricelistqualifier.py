@@ -1,0 +1,25 @@
+# Databricks notebook source
+schema = {
+	'createdBy' : 'string',
+    'createdOn' : 'timestamp',
+    'modifiedBy' : 'string',
+    'modifiedOn' : 'timestamp',
+    'insertedOn' : 'timestamp',
+    'updatedOn' : 'timestamp',
+    'comparisonOperatorCode' : 'string',
+    'priceListHeaderId' : 'string',
+    'qualifierAttribute' : 'string',
+    'qualifierAttributeValue' : 'string',
+    'qualifierContext' : 'string',
+    'qualifierGroupingNumber' : 'string',
+    'qualifierId' : 'string',
+    'qualifierPrecedence' : 'int',
+    '_SOURCE' : 'string',
+    '_ID' : 'string',
+    'createdBy_ID' : 'string',
+    'modifiedBy_ID' : 'string',
+    'priceListHeader_ID' : 'string',
+    '_PART': 'date',
+    '_DELETED': 'boolean',
+    '_MODIFIED': 'timestamp'
+}

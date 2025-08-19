@@ -1,0 +1,57 @@
+# Databricks notebook source
+config = [
+{
+	'PartitionKey': '1',
+	'RowKey': '1',
+	'ACTIVE': True,
+    'ENVIRONMENT': 'dev',
+    'FILE_EXTENSION': 'csv',
+	'FILE_NAME': '{param_value2}-{datetime}-{param_value1}',
+    'GROUPINGS': True,
+    'GROUPING_QUERY': "SELECT DISTINCT groupingid as param_value1, oracle_user_id as param_value2 FROM s_logility.po_logility_ebs WHERE Processed='N'",
+    'NOTEBOOK_NAME': 'LOGILITY_PO_UPDATE',
+	'PUBLISH': True,
+	'QUERY': "SELECT ORG_CODE,ITEM,FOR_RELEASE,ORDER_TYPE_CODE,NEW_DATE,NEW_QUANTITY,PO_NUM,SOURCE_ORG,SOURCE_SUPPLIER,SOURCE_SUPPLIER_SITE FROM s_logility.po_logility_ebs WHERE GroupingId = '{param_value1}'",
+	'TABLE_NAME': 's_logility.po_logility_ebs',
+    'TARGET_FOLDER': '/anhu/interface/xxdata/xxint_data/in/data/xxascp',
+    'TARGET_HOST': 'anh071.coresys.com',
+    'TRIGGER_PROCESS': False,
+    'TRIGGER_URL': 'http://uat-osb.ansell.com/ans/ASCP_POCreate_Wrapper'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '2',
+	'ACTIVE': False,
+    'ENVIRONMENT': 'test',
+    'FILE_EXTENSION': 'csv',
+	'FILE_NAME': '{param_value2}-{datetime}-{param_value1}',
+    'GROUPINGS': True,
+    'GROUPING_QUERY': "SELECT DISTINCT groupingid as param_value1, oracle_user_id as param_value2 FROM s_logility.po_logility_ebs WHERE Processed='N'",
+    'NOTEBOOK_NAME': 'LOGILITY_PO_UPDATE',
+	'PUBLISH': True,
+	'QUERY': "SELECT ORG_CODE,ITEM,FOR_RELEASE,ORDER_TYPE_CODE,NEW_DATE,NEW_QUANTITY,PO_NUM,SOURCE_ORG,SOURCE_SUPPLIER,SOURCE_SUPPLIER_SITE FROM s_logility.po_logility_ebs WHERE GroupingId = '{param_value1}'",
+	'TABLE_NAME': 's_logility.po_logility_ebs',
+    'TARGET_FOLDER': '/anhu/interface/xxdata/xxint_data/in/data/xxascp',
+    'TARGET_HOST': 'anh071.coresys.com',
+    'TRIGGER_PROCESS': False,
+    'TRIGGER_URL': 'http://uat-osb.ansell.com/ans/ASCP_POCreate_Wrapper'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '3',
+	'ACTIVE': False,
+    'ENVIRONMENT': 'prod',
+    'FILE_EXTENSION': 'csv',
+	'FILE_NAME': '{param_value2}-{datetime}-{param_value1}',
+    'GROUPINGS': True,
+    'GROUPING_QUERY': "SELECT DISTINCT groupingid as param_value1, oracle_user_id as param_value2 FROM s_logility.po_logility_ebs WHERE Processed='N'",
+    'NOTEBOOK_NAME': 'LOGILITY_PO_UPDATE',
+	'PUBLISH': True,
+	'QUERY': "SELECT ORG_CODE,ITEM,FOR_RELEASE,ORDER_TYPE_CODE,NEW_DATE,NEW_QUANTITY,PO_NUM,SOURCE_ORG,SOURCE_SUPPLIER,SOURCE_SUPPLIER_SITE FROM s_logility.po_logility_ebs WHERE GroupingId = '{param_value1}'",
+	'TABLE_NAME': 's_logility.po_logility_ebs',
+    'TARGET_FOLDER': '/anhp/interface/xxdata/xxint_data/in/data/xxascp',
+    'TARGET_HOST': 'edi.ansell.com',
+    'TRIGGER_PROCESS': False,
+    'TRIGGER_URL': 'http://prod-osb.ansell.com/ans/ASCP_POCreate_Wrapper'
+}  
+]

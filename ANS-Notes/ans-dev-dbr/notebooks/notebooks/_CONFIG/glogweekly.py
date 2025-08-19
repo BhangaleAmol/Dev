@@ -1,0 +1,68 @@
+# Databricks notebook source
+config = [
+{
+	'PartitionKey': '1',
+	'RowKey': '1',
+	'ACTIVE': True,
+	'INCREMENTAL': False,
+	'NOTEBOOK_LEVEL': 1,
+	'NOTEBOOK_NAME': 'LOGILITY_DROP_SHIP_SAP',
+	'PRUNE_DAYS': 1,
+	'PUBLISH': True,
+	'TABLE_NAME': 'LOGILITY_DROP_SHIP_SAP'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '2',
+	'ACTIVE': True,
+	'INCREMENTAL': False,
+	'NOTEBOOK_LEVEL': 1,
+	'NOTEBOOK_NAME': 'LOGILITY_DROP_SHIP_EBS',
+	'PRUNE_DAYS': 1,
+	'PUBLISH': True,
+	'TABLE_NAME': 'LOGILITY_DROP_SHIP_EBS'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '3',
+	'ACTIVE': True,
+	'INCREMENTAL': False,
+	'NOTEBOOK_LEVEL': 1,
+	'NOTEBOOK_NAME': 'LOGILITY_PLANNED_ORDERS',
+	'PRUNE_DAYS': 1,
+	'PUBLISH': True,
+	'TABLE_NAME': 'LOGILITY_PLANNED_ORDERS'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '4',
+	'ACTIVE': True,
+	'INCREMENTAL': False,
+	'NOTEBOOK_LEVEL': 1,
+	'NOTEBOOK_NAME': 'SP_SOLVEREXTRACT_TP',
+	'PRUNE_DAYS': 1,
+	'PUBLISH': True,
+	'TABLE_NAME': 'SP_SOLVEREXTRACT_TP'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '5',
+	'ACTIVE': True,
+	'INCREMENTAL': False,
+	'NOTEBOOK_LEVEL': 1,
+	'NOTEBOOK_NAME': 'LOGILITY_SP_DROPPED_DEMAND',
+	'PRUNE_DAYS': 1,
+	'PUBLISH': True,
+	'TABLE_NAME': 'LOGILITY_SP_DROPPED_DEMAND'
+},
+{
+	'PartitionKey': '1',
+	'RowKey': '6',
+	'ACTIVE': True,
+	'INCREMENTAL': False,
+	'NOTEBOOK_LEVEL': 1,
+	'NOTEBOOK_NAME': 'LOGILITY_SP_CAPACITY_CONSUMPTION',
+	'PRUNE_DAYS': 1,
+	'PUBLISH': True,
+	'TABLE_NAME': 'LOGILITY_SP_CAPACITY_CONSUMPTION'
+}]

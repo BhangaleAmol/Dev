@@ -1,0 +1,252 @@
+# Databricks notebook source
+# MAGIC %run ../SHARED/bootstrap
+
+# COMMAND ----------
+
+# Get parameters
+dbutils.widgets.text("target_folder", "","")
+targetFolder = getArgument("target_folder")
+targetFolder = '/datalake/EBS/stage_data' if targetFolder == '' else targetFolder
+
+dbutils.widgets.text("table_name", "","")
+tableName = getArgument("table_name")
+tableName = 'W_ALLOCATIONS_PER_ACCOUNT_A' if tableName == '' else tableName
+
+# COMMAND ----------
+
+# Create paths
+
+#sourceFolderUrl = '/mnt/datalake'  + sourceFolder + '/'
+targetFileUrl = DATALAKE_ENDPOINT +  targetFolder + '/' + tableName + '.par'
+
+#print(sourceFolderUrl)
+#print(sourceFolderCsvUrl)
+print(targetFileUrl)
+
+# COMMAND ----------
+
+PERIOD_SELECTION = spark.sql("""
+SELECT DISTINCT
+  START_DATE_ACTIVE,
+  END_DATE_ACTIVE
+FROM 
+  FND_LOOKUP_VALUES FLV
+WHERE 
+  FLV.LOOKUP_TYPE = 'XX_OTC_ITEM_DEMAND_MONTHS_NEW'
+AND FLV.LANGUAGE = 'US'
+AND FLV.ENABLED_FLAG = 'Y'
+""")
+
+PERIOD_SELECTION.createOrReplaceTempView("PERIOD_SELECTION")
+PERIOD_SELECTION.cache()
+PERIOD_SELECTION.count()
+
+# COMMAND ----------
+
+LIST_OF_ACCOUNTS = spark.sql("""
+SELECT DISTINCT
+  LOOKUP_CODE ACCOUNT_NUMBER
+FROM 
+  FND_LOOKUP_VALUES
+WHERE 
+  LOOKUP_TYPE = 'XX_OTC_ORDERITEMDEMAND'
+  AND LANGUAGE =  'US'
+  AND ATTRIBUTE_CATEGORY = 'Covid-19'
+  AND ATTRIBUTE1 = '0'
+""")
+
+LIST_OF_ACCOUNTS.createOrReplaceTempView("LIST_OF_ACCOUNTS")
+LIST_OF_ACCOUNTS.cache()
+LIST_OF_ACCOUNTS.count()
+
+# COMMAND ----------
+
+LIST_OF_ITEMS = spark.sql("""
+SELECT 
+    MIC.INVENTORY_ITEM_ID,
+    NVL (MC.SEGMENT5, MC.SEGMENT4),
+    MC.SEGMENT5, MC.SEGMENT4
+  FROM MTL_CATEGORY_SETS_TL  MCT,
+       MTL_CATEGORY_SETS_B   MCB,
+       MTL_CATEGORIES_B      MC,
+       MTL_ITEM_CATEGORIES   MIC
+WHERE     MCT.CATEGORY_SET_ID = MCB.CATEGORY_SET_ID
+       AND MCB.STRUCTURE_ID = MC.STRUCTURE_ID
+       AND MC.CATEGORY_ID = MIC.CATEGORY_ID
+       AND MIC.ORGANIZATION_ID = 124
+       AND MCT.CATEGORY_SET_NAME = 'Brand'
+       AND MCT.LANGUAGE = 'US'
+       AND NVL(MC.SEGMENT5, MC.SEGMENT4) IN (SELECT MEANING
+          FROM FND_LOOKUP_VALUES
+         WHERE     LOOKUP_TYPE = 'XX_ANSELL_ZERO_DEMAND_STYLE'
+               AND LANGUAGE = 'US')
+""")
+
+LIST_OF_ITEMS.createOrReplaceTempView("LIST_OF_ITEMS")
+LIST_OF_ITEMS.cache()
+LIST_OF_ITEMS.count()
+
+# COMMAND ----------
+
+W_ALLOCATIONS_PER_ACCOUNT_A = spark.sql("""
+    SELECT 
+    --CONCAT(CONCAT(CONCAT(CONCAT(REPLACE(STRING(INT(ACCOUNT_ID)), ",", "") , '-'), REPLACE(STRING(INT(PRODUCT_ID)), ",", "") ), '-'), REPLACE(STRING(INT(LINE_ID)), ",", "") ) INTEGRATION_ID,
+    REPLACE(STRING(INT(ACCOUNT_ID)), ",", "")  || "-" || REPLACE(STRING(INT(PRODUCT_ID)), ",", "") || "-" ||  REPLACE(STRING(INT(LINE_ID)), ",", "") || "-" || DATE_FORMAT(CURRENT_DATE - 1,'yyyyMM') INTEGRATION_ID,
+    CREATED_ON_DT,
+    CHANGED_ON_DT,
+    CREATED_BY_ID,
+    CHANGED_BY_ID,
+    INSERT_DT, 
+    UPDATE_DT,
+    DATASOURCE_NUM_ID,
+    LOAD_BATCH_ID,
+    CANCELLED_FLG,
+    DELETE_FLG,
+    REPLACE(STRING(INT(ACCOUNT_ID)), ",", "") ACCOUNT_ID,
+    PRODUCT_ID,
+    round(SUM(ALLOCATED_QTY) / 6 + SUM(MANUEL_ALLOCATION),2) ALLOCATED_QTY,
+    LINE_ID,
+    DATE_FORMAT(CURRENT_DATE - 1,'yyyy-MM')  REPORTING_MONTH 
+  FROM
+  (SELECT 
+      DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') CREATED_ON_DT,
+      DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') CHANGED_ON_DT,
+      0 CREATED_BY_ID,
+      0 CHANGED_BY_ID,
+      DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') INSERT_DT,  
+      DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') UPDATE_DT,
+      'EBS' DATASOURCE_NUM_ID,
+      DATE_FORMAT(CURRENT_TIMESTAMP,'yyyyMMddHHmmssSSS') LOAD_BATCH_ID,
+      'N' CANCELLED_FLG,
+      'N' DELETE_FLG,
+      HZ_CUST_ACCOUNTS.CUST_ACCOUNT_ID ACCOUNT_ID,
+      MTL_SYSTEM_ITEMS_B.INVENTORY_ITEM_ID PRODUCT_ID,
+      INT(SUM(ROUND(CASE WHEN OE_ORDER_LINES_ALL.LINE_CATEGORY_CODE = 'ORDER' 
+        THEN OE_ORDER_LINES_ALL.ORDERED_QUANTITY * OE_ORDER_LINES_ALL.OUM2CASE
+        ELSE OE_ORDER_LINES_ALL.ORDERED_QUANTITY * OE_ORDER_LINES_ALL.OUM2CASE * -1
+        END,2)) ) ALLOCATED_QTY,
+      0 MANUEL_ALLOCATION, 
+      OE_ORDER_LINES_ALL.LINE_ID  
+    FROM 
+      EBS.OE_ORDER_LINES_ALL,
+      EBS.OE_ORDER_HEADERS_ALL,
+      EBS.HZ_CUST_ACCOUNTS,
+      EBS.MTL_SYSTEM_ITEMS_B,
+      LIST_OF_ACCOUNTS,
+      LIST_OF_ITEMS
+    WHERE OE_ORDER_LINES_ALL.HEADER_ID = OE_ORDER_HEADERS_ALL.HEADER_ID
+      AND OE_ORDER_LINES_ALL.SOLD_TO_ORG_ID = HZ_CUST_ACCOUNTS.CUST_ACCOUNT_ID
+      AND OE_ORDER_HEADERS_ALL.CREATION_DATE BETWEEN (SELECT START_DATE_ACTIVE FROM PERIOD_SELECTION) AND (SELECT END_DATE_ACTIVE FROM PERIOD_SELECTION)
+      AND HZ_CUST_ACCOUNTS.CUSTOMER_TYPE = 'R'
+      AND OE_ORDER_LINES_ALL.INVENTORY_ITEM_ID = MTL_SYSTEM_ITEMS_B.INVENTORY_ITEM_ID
+      AND MTL_SYSTEM_ITEMS_B.ORGANIZATION_ID = 124
+      AND OE_ORDER_LINES_ALL.INVENTORY_ITEM_ID = LIST_OF_ITEMS.INVENTORY_ITEM_ID
+      
+      -- exclude specific status codes
+      
+      AND OE_ORDER_LINES_ALL.FLOW_STATUS_CODE NOT IN
+                                      (SELECT LOOKUP_CODE
+                                         FROM FND_LOOKUP_VALUES
+                                        WHERE     LOOKUP_TYPE = 'XX_ITEMDEMAND_LINESTATUS'
+                                              AND ENABLED_FLAG = 'Y'
+                                              And LANGUAGE = 'US')
+      
+      -- select only eligible transaction types
+      
+      AND EXISTS
+        (SELECT 'Y'
+         FROM    
+            OE_ORDER_HEADERS_ALL AOHA,
+            OE_TRANSACTION_TYPES_TL AOTT,
+            FND_LOOKUP_VALUES AFLV
+        WHERE     AOHA.ORDER_TYPE_ID = AOTT.TRANSACTION_TYPE_ID
+            AND AOTT.LANGUAGE = 'US'
+            AND AFLV.LOOKUP_TYPE = 'XX_OTC_ITEMDEMAND_ORDERTYPES'
+            AND AFLV.ENABLED_FLAG = 'Y'
+            AND AFLV.LANGUAGE = 'US'
+            AND UPPER (AOTT.NAME) = UPPER (AFLV.LOOKUP_CODE)
+            AND AOHA.HEADER_ID = OE_ORDER_LINES_ALL.HEADER_ID)
+      
+      -- select only eligible accounts
+      
+      AND HZ_CUST_ACCOUNTS.ACCOUNT_NUMBER = LIST_OF_ACCOUNTS.ACCOUNT_NUMBER
+      
+      -- select only average demand if no average demand exists in lookup table
+      
+      AND NOT EXISTS (SELECT 1 
+                      FROM 
+                        FND_LOOKUP_VALUES
+                      WHERE 
+                        LOOKUP_TYPE = 'XX_OTC_DEMAND_CUST_AVG'
+                        AND ENABLED_FLAG = 'Y'
+                        AND LANGUAGE = 'E'
+                        AND TRIM(MTL_SYSTEM_ITEMS_B.SEGMENT1) = TRIM(FND_LOOKUP_VALUES.DESCRIPTION)
+                        AND HZ_CUST_ACCOUNTS.ACCOUNT_NUMBER = TRIM(SUBSTR(FND_LOOKUP_VALUES.MEANING, 1, INSTR(FND_LOOKUP_VALUES.MEANING, '-') - 1)))
+  GROUP BY
+    HZ_CUST_ACCOUNTS.CUST_ACCOUNT_ID,
+    MTL_SYSTEM_ITEMS_B.INVENTORY_ITEM_ID,
+    OE_ORDER_LINES_ALL.LINE_ID
+  
+  UNION ALL
+  
+    SELECT
+        DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') CREATED_ON_DT,
+        DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') CHANGED_ON_DT,
+        0 CREATED_BY_ID,
+        0 CHANGED_BY_ID,
+        DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') INSERT_DT,  
+        DATE_FORMAT(CURRENT_TIMESTAMP,'yyyy-MM-dd HH:mm:ss.SSS') UPDATE_DT,
+        'EBS' DATASOURCE_NUM_ID,
+        DATE_FORMAT(CURRENT_TIMESTAMP,'yyyyMMddHHmmssSSS') LOAD_BATCH_ID,
+        'N' CANCELLED_FLG,
+        'N' DELETE_FLG,
+        (SELECT FIRST(CUST_ACCOUNT_ID) FROM HZ_CUST_ACCOUNTS WHERE HZ_CUST_ACCOUNTS.ACCOUNT_NUMBER = TRIM(SUBSTR(FND_LOOKUP_VALUES.MEANING, 1, INSTR(FND_LOOKUP_VALUES.MEANING, '-') - 1))) ACCOUNT_ID,
+        (SELECT FIRST(INVENTORY_ITEM_ID) FROM MTL_SYSTEM_ITEMS_B WHERE SEGMENT1 = FND_LOOKUP_VALUES.DESCRIPTION AND MTL_SYSTEM_ITEMS_B.ORGANIZATION_ID = 124 ) PRODUCT_ID,
+        0  ALLOCATED_QTY,
+        CAST(TAG AS INT)  MANUEL_ALLOCATION,
+        0 LINE_ID
+      FROM
+        FND_LOOKUP_VALUES,
+        LIST_OF_ACCOUNTS
+      WHERE 
+        LOOKUP_TYPE = 'XX_OTC_DEMAND_CUST_AVG'
+        AND ENABLED_FLAG = 'Y'
+        AND LANGUAGE = 'E'
+        AND TRIM(SUBSTR(FND_LOOKUP_VALUES.MEANING, 1, INSTR(FND_LOOKUP_VALUES.MEANING, '-') - 1)) = LIST_OF_ACCOUNTS.ACCOUNT_NUMBER)
+      
+    WHERE CONCAT(CONCAT(REPLACE(STRING(INT(ACCOUNT_ID)), ",", "") , '-'), REPLACE(STRING(INT(PRODUCT_ID)), ",", "") ) IS NOT NULL  
+    GROUP BY 
+      CONCAT(CONCAT(CONCAT(CONCAT(REPLACE(STRING(INT(ACCOUNT_ID)), ",", "") , '-'), REPLACE(STRING(INT(PRODUCT_ID)), ",", "") ), '-'), REPLACE(STRING(INT(LINE_ID)), ",", "") ),
+      CREATED_ON_DT,
+      CHANGED_ON_DT,
+      CREATED_BY_ID,
+      CHANGED_BY_ID,
+      INSERT_DT, 
+      UPDATE_DT,
+      DATASOURCE_NUM_ID,
+      LOAD_BATCH_ID,
+      CANCELLED_FLG,
+      DELETE_FLG,
+      REPLACE(STRING(INT(ACCOUNT_ID)), ",", ""),
+      PRODUCT_ID,
+      LINE_ID
+""")
+W_ALLOCATIONS_PER_ACCOUNT_A.createOrReplaceTempView("W_ALLOCATIONS_PER_ACCOUNT_A")
+W_ALLOCATIONS_PER_ACCOUNT_A.cache()
+W_ALLOCATIONS_PER_ACCOUNT_A.count()
+
+# COMMAND ----------
+
+count = W_ALLOCATIONS_PER_ACCOUNT_A.select("INTEGRATION_ID").count()
+countDistinct = W_ALLOCATIONS_PER_ACCOUNT_A.select("INTEGRATION_ID").distinct().count()
+
+print(count)
+print(countDistinct)
+
+if(count != countDistinct):
+  message = 'Mismatch in count of total records ({0}) and distinct count of primary keys ({1}) in {2} '.format(count, countDistinct, tableName)
+  raise Exception(message)
+
+# COMMAND ----------
+
+W_ALLOCATIONS_PER_ACCOUNT_A.coalesce(10).write.format("parquet").mode("overwrite").save(targetFileUrl)

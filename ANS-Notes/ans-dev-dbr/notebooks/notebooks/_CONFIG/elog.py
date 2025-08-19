@@ -1,0 +1,81 @@
+# Databricks notebook source
+config = [
+{
+    'PartitionKey': '1',
+    'RowKey': '1',
+    'ACTIVE': True,
+    'ENVIRONMENT': 'dev',
+    'FILE_EXTENSION': 'csv',
+    'FILE_NAME': 'LOG_FCAST_INFORDP_{datetime}',
+    'GROUPINGS':False,
+    'PUBLISH': True,
+    'TABLE_NAME': 'g_logility.forecast_infordp',
+    'TARGET_FOLDER': '/anhumdm/app01/informatica10.4/server/infa_shared/TgtFiles/INFOR',
+    'TARGET_HOST': 'anhmtu02.coresys.com'
+},
+{
+    'PartitionKey': '1',
+    'RowKey': '2',
+    'ACTIVE': True,
+    'ENVIRONMENT': 'dev',
+    'FILE_EXTENSION': 'dat',
+    'FILE_NAME': 'LOG_FCAST_ORACLE_{datetime}',
+    'GROUPINGS':False,
+    'PUBLISH': True,
+    'TABLE_NAME': 'g_logility.forecast_oracle_ascp',
+    'TARGET_FOLDER': '/anhu/interface/xxdata/xxint_data/in/data/mlein',
+    'TARGET_HOST': 'anh071.coresys.com'
+},
+{
+    'PartitionKey': '2',
+    'RowKey': '1',
+    'ACTIVE': True,
+    'ENVIRONMENT': 'test',
+    'FILE_EXTENSION': 'csv',
+    'FILE_NAME': 'LOG_FCAST_INFORDP_{datetime}',
+    'GROUPINGS':False,
+    'PUBLISH': True,
+    'TABLE_NAME': 'g_logility.forecast_infordp',
+    'TARGET_FOLDER': '/anhumdm/app01/informatica10.4/server/infa_shared/TgtFiles/INFOR',
+    'TARGET_HOST': 'anhmtu02.coresys.com'
+},
+{
+    'PartitionKey': '2',
+    'RowKey': '2',
+    'ACTIVE': True,
+    'ENVIRONMENT': 'test',
+    'FILE_EXTENSION': 'dat',
+    'FILE_NAME': 'LOG_FCAST_ORACLE_{datetime}',
+    'GROUPINGS':False,
+    'PUBLISH': True,
+    'TABLE_NAME': 'g_logility.forecast_oracle_ascp',
+    'TARGET_FOLDER': '/anhu/interface/xxdata/xxint_data/in/data/mlein',
+    'TARGET_HOST': 'anh071.coresys.com'
+},
+{
+    'PartitionKey': '3',
+    'RowKey': '1',
+    'ACTIVE': True,
+    'ENVIRONMENT': 'prod',
+    'FILE_EXTENSION': 'csv',
+    'FILE_NAME': 'LOG_FCAST_INFORDP_{datetime}',
+    'GROUPINGS':False,
+    'PUBLISH': True,
+    'TABLE_NAME': 'g_logility.forecast_infordp',
+    'TARGET_FOLDER': '/anhpmdm/app01/informatica10.4/server/infa_shared/TgtFiles/INFOR',
+    'TARGET_HOST': 'anhmtp02.coresys.com'
+},
+{
+    'PartitionKey': '3',
+    'RowKey': '2',
+    'ACTIVE': True,
+    'ENVIRONMENT': 'prod',
+    'FILE_EXTENSION': 'dat',
+    'FILE_NAME': 'LOG_FCAST_ORACLE_{datetime}',
+    'GROUPINGS':False,
+    'PUBLISH': True,
+    'TABLE_NAME': 'g_logility.forecast_oracle_ascp',
+    'TARGET_FOLDER': '/anhp/interface/xxdata/xxint_data/in/data/mlein',
+    'TARGET_HOST': 'edi.ansell.com'
+},  
+]
