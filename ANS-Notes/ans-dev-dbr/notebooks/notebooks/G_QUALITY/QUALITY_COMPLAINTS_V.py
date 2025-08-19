@@ -1,0 +1,53 @@
+# Databricks notebook source
+# MAGIC %sql 
+# MAGIC CREATE OR REPLACE VIEW g_quality.quality_complaints_v AS
+# MAGIC select
+# MAGIC   createdBy,
+# MAGIC   createdOn,
+# MAGIC   modifiedBy,
+# MAGIC   modifiedOn,
+# MAGIC   insertedOn,
+# MAGIC   updatedOn,
+# MAGIC   approver1,
+# MAGIC   approver1Date,
+# MAGIC   approver2,
+# MAGIC   approver2Date,
+# MAGIC   approver3,
+# MAGIC   approver3Date,
+# MAGIC   approver4,
+# MAGIC   approver4Date,
+# MAGIC   approver5,
+# MAGIC   approver5Date,
+# MAGIC   complaintAmount,
+# MAGIC   complaintAmountEur,
+# MAGIC   complaintAmountUsd,
+# MAGIC   complaintDescription,
+# MAGIC   complaintId,
+# MAGIC   complaintStatus,
+# MAGIC   complaintTitle,
+# MAGIC   complaintType,
+# MAGIC   complaintType2,
+# MAGIC   country,
+# MAGIC   creditNoteDate,
+# MAGIC   creditNoteNumber,
+# MAGIC   creditNoteValue,
+# MAGIC   csr,
+# MAGIC   currency,
+# MAGIC   distributorName,
+# MAGIC   gbu,
+# MAGIC   involved,
+# MAGIC   lotNumber,
+# MAGIC   originName,
+# MAGIC   productName,
+# MAGIC   quantity,
+# MAGIC   region,
+# MAGIC   reportingGroup,
+# MAGIC   requestType,
+# MAGIC   requestType2,
+# MAGIC   trackWiseDigitalNumber,
+# MAGIC   trackwiseNumber,
+# MAGIC   unitOfMeasure
+# MAGIC   from 
+# MAGIC   s_service.quality_creditnote_approval_agg
+# MAGIC   where _source = 'COM'
+# MAGIC   AND not _deleted
