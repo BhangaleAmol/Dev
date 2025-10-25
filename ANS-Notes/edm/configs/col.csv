@@ -1,0 +1,15 @@
+PartitionKey,RowKey,UC,UC@type,ACTIVE,ACTIVE@type,HANDLE_DELETE,HANDLE_DELETE@type,INCREMENTAL,INCREMENTAL@type,PUBLISH,PUBLISH@type,SOURCE_NAME,SOURCE_NAME@type,TABLE_NAME,TABLE_NAME@type
+1,1,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_MLE_Channel_PRODUCT,String,VW_MLE_CHANNEL_PRODUCT,String
+1,10,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_Warehouse,String,VW_Warehouse,String
+1,11,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_Customers,String,VW_Customers,String
+1,12,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_MLE_Product_in_Transit,String,VW_MLE_IN_TRANSIT,String
+1,13,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_TEMBO_ORDERS,String,VW_TEMBO_ORDERS,String
+1,14,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_TEMBO_PRODUCT,String,VW_TEMBO_PRODUCT,String
+1,2,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_MLE_Open_Orders,String,VW_MLE_OPEN_ORDERS,String
+1,3,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_MLE_Past_Future_Demand,String,VW_MLE_PAST_FUTURE_DEMAND,String
+1,4,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_MLE_Product,String,VW_MLE_PRODUCT,String
+1,5,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_MLE_Opening_Stock,String,VW_MLE_OPENING_STOCK,String
+1,6,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_QV_Inventory,String,VW_QV_INVENTORY,String
+1,7,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_QV_Invoices,String,VW_QV_INVOICES,String
+1,8,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_QV_ORDERS,String,VW_QV_ORDERS,String
+1,9,TRUE,Boolean,TRUE,Boolean,FALSE,Boolean,FALSE,Boolean,TRUE,Boolean,VW_Company,String,VW_Company,String

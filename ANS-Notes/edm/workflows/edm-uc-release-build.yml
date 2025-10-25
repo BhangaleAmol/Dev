@@ -1,0 +1,22 @@
+trigger:
+  branches:
+      include:
+      - refs/heads/release/*
+
+name: $(BuildID)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-latest
+
+  steps:
+  - checkout: self
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: edm'
+    inputs:
+      PathtoPublish: '$(Build.SourcesDirectory)'
+      ArtifactName: 'drop'      

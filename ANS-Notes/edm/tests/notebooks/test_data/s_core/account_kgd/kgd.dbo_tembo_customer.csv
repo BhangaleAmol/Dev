@@ -1,0 +1,11 @@
+Cust_ID,CreateBy,CreateDate,LastModifyDate,CustomerType,ShipToAddress,AddressCountry,PostalCode,CustomerName,BillAddress,GBU,ForecastCode,_MODIFIED,_DELETED
+1342,Administrator,2013-04-17T17:04:32.000Z,2016-10-20T12:42:33.000Z,Distributor,上海浦东新区浦三路3058号长青企业广场256室,China,200123,Zhongjiu Keji,上海市张江高科技园区蔡伦路780号814室,IND,Other,2023-03-08T14:22:54.459Z,false
+29194,Szeyunn Lee 2,2021-01-04T21:49:11.000Z,2021-07-20T16:18:39.000Z,Distributor,北京市朝阳区高碑店村一区52-5号,China,100123,Beijing Hong Yu Kang Da,北京市延庆区永宁镇左所屯村东区90号-1,MED,Other,2023-03-08T14:22:54.459Z,false
+50348,Szeyunn Lee 2,2022-07-06T19:00:27.000Z,"",Distributor,浙江省衢州市芳桂中路19号5幢1号,China,324000,QuZhou Ruino,浙江省衢州市柯城区新新街道彩虹路12号101室,MED,Other,2023-03-08T14:22:54.459Z,false
+17172,SzeYunn Lee,2019-10-18T11:12:10.000Z,2021-05-06T10:43:44.000Z,Distributor,合肥市包河区宁夏路与乌鲁木齐路交口鸿翔科技园六号楼416室,China,"",Hefei Tian Yi,合肥市包河区宁夏路与乌鲁木齐路交口鸿翔科技园六号楼416室,MED,Other,2023-03-08T14:22:54.459Z,false
+19614,Shu Jun Kwan,2020-03-10T14:40:54.000Z,"",Distributor,陕西省西安市莲湖区汉城北路25号一排25号,China,710000,Xian Baosen,陕西省西安市莲湖区汉城北路25号一排25号,MED,Other,2023-03-08T14:22:54.459Z,false
+2999,Michelle Lee,2016-01-20T19:14:06.000Z,2018-01-17T13:36:18.000Z,Distributor,山东省济宁市红星东路127号(化工研究院四楼）,China,272117,Jining Xintian Di,山东省济宁市红星东路127号(化工研究院四楼）,MED,Other,2023-03-08T14:22:54.459Z,false
+54518,Venice Hew,2022-09-14T13:19:12.000Z,2022-09-14T13:45:04.000Z,Distributor,云南省昆明市西山区二环西路150号,China,"",Yunan BeiSiQi,云南省昆明市西山区西二环路南段西苑商城1幢13-15号1楼，3楼,MED,Other,2023-03-08T14:22:54.459Z,false
+1339,Administrator,2013-04-17T17:01:28.000Z,2016-06-13T17:01:10.000Z,Distributor,上海市徐汇区虹梅路1535号星联科研楼2幢3楼,China,200233,Grainger,上海市徐汇区虹梅路1535号星联科研楼2幢3楼、4楼,IND,Other,2023-03-08T14:22:54.459Z,false
+2572,Sophie Shen,2014-07-23T11:02:31.000Z,"",Distributor,上海市青浦区徐泾镇双联路388号8号楼11层,China,201702,Shanghai Guangtong,上海市青浦区徐泾镇双联路388号8号楼11层,IND,Other,2023-03-08T14:22:54.459Z,false
+2776,Ida Sheng,2015-05-19T15:45:09.000Z,"",Distributor,天津市河北区杜鹃道嘉畅园1号楼1门702室,China,"",Tianjin Zhibolian,天津市津南区辛庄创意产业园津沽路818号辛庄经济服务中心105-5,MED,Other,2023-03-08T14:22:54.459Z,false

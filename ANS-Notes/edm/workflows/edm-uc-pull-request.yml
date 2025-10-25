@@ -1,0 +1,98 @@
+trigger: none
+
+name: $(BuildID)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+variables:
+- group: edm_dev
+
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-latest
+
+  steps:
+  - checkout: self
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: edm'
+    inputs:
+      PathtoPublish: '$(Build.SourcesDirectory)'
+      ArtifactName: 'drop'      
+
+  - task: UsePythonVersion@0
+    displayName: 'Use Python 3.8'
+    inputs:
+      versionSpec: '3.8'
+      addToPath: true
+      architecture: 'x64'
+  
+  - task: CmdLine@2
+    displayName: 'Install Python Libraries'
+    inputs:
+      script: 'pip install requests==2.28.2'
+
+  - task: PythonScript@0
+    displayName: 'Set Variables'
+    inputs:
+      scriptSource: 'inline'
+      script: |
+        import os, re
+        source_branch = os.environ["SYSTEM_PULLREQUEST_SOURCEBRANCH"]
+        branch_name = source_branch.replace('refs/heads/', '')
+        folder_name = re.sub(r'[^A-Za-z0-9_]+', '_', branch_name)
+        database_name = 'test_' + re.sub(r'[^A-Za-z0-9_]+', '_', branch_name)
+
+        print(f'branch_name: {branch_name}')
+        print(f'folder_name: {folder_name}')
+        print(f'database_name: {database_name}')
+
+        print(f'##vso[task.setvariable variable=branch_name;]{branch_name}')
+        print(f'##vso[task.setvariable variable=folder_name;]{folder_name}')
+        print(f'##vso[task.setvariable variable=database_name;]{database_name}')
+
+  - task: PythonScript@0
+    displayName: 'Set Test Repository'
+    inputs:
+      scriptSource: 'filePath'
+      scriptPath: 'workflows/scripts/databricks/set_repository.py'
+      arguments: '--workspace_url $(dbr_workspace_url) --dbr_token $(dbr_token) --git_url $(git_url) --git_branch $(branch_name) --repository_path /Repos/tests/$(folder_name)'
+
+  - task: PythonScript@0
+    displayName: 'Wait'
+    inputs:
+      scriptSource: 'inline'
+      script: |
+        import time 
+        time.sleep(10)
+
+  - task: PythonScript@0
+    displayName: 'Run Unit Tests'
+    inputs:
+      scriptSource: 'filePath'
+      scriptPath: 'workflows/scripts/databricks/run_unit_tests.py'
+      arguments: '--workspace_url $(dbr_workspace_url) --dbr_token $(dbr_token) --cluster_id $(dbr_cluster_id) --run_name unit_tests --notebook_path /Repos/tests/$(folder_name)/tests/run_tests --notebook_params "{\"database_name\":\"$(database_name)\",\"ignore_path\":\"tests/schema,tests/quality\"}"'
+  
+  - task: PythonScript@0
+    displayName: 'Export Test Results'
+    condition: succeededOrFailed()
+    inputs:
+      scriptSource: 'filePath'
+      scriptPath: 'workflows/scripts/databricks/export_test_results.py'
+      arguments: '--workspace_url $(dbr_workspace_url) --dbr_token $(dbr_token) --file_path /Repos/tests/$(folder_name)/tests/report.xml'
+
+  - task: PublishTestResults@2
+    displayName: 'Show Test Results'
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/report.xml'
+      mergeTestResults: true
+      failTaskOnFailedTests: false
+
+  - task: PythonScript@0
+    displayName: 'Remove Test Repository'
+    inputs:
+      scriptSource: 'filePath'
+      scriptPath: 'workflows/scripts/databricks/remove_repository.py'
+      arguments: '--workspace_url $(dbr_workspace_url) --dbr_token $(dbr_token) --repository_path /Repos/tests/$(folder_name)'
